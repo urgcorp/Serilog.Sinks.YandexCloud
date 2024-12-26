@@ -57,6 +57,11 @@ namespace Serilog.Sinks.YandexCloud
                 properties.Add(key, ToStructure(entry.Properties[key]));
             }
 
+            if (entry.Exception is not null)
+            {
+                properties.Add(nameof(entry.Exception), entry.Exception.ToString());
+            }
+
             return Struct.Parser.ParseJson(JsonSerializer.Serialize(properties));
         }
 
