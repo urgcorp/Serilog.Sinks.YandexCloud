@@ -30,14 +30,18 @@ public class YandexCloudSinkTests
 
         logger.Write(LogEventLevel.Information, "test message");
 
-        Assert.That(ingestionServiceMock.Invocations.Count, Is.EqualTo(1));
+        Assert.That(ingestionServiceMock.Invocations, Has.Count.EqualTo(1));
 
-        var writeRequest = ingestionServiceMock.Invocations.First().Arguments[0] as WriteRequest;
-        
-        Assert.That(writeRequest.Resource.Id, Is.EqualTo(settings.ResourceId));
-        Assert.That(writeRequest.Resource.Type, Is.EqualTo(settings.ResourceType));
-        Assert.That(writeRequest.Destination.LogGroupId, Is.EqualTo(settings.LogGroupId));
-        Assert.That(writeRequest.Entries.Count, Is.EqualTo(1));
+        var writeRequest = ingestionServiceMock.Invocations[0].Arguments[0] as WriteRequest;
+
+        Assert.That(writeRequest, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(writeRequest.Resource.Id, Is.EqualTo(settings.ResourceId));
+            Assert.That(writeRequest.Resource.Type, Is.EqualTo(settings.ResourceType));
+            Assert.That(writeRequest.Destination.LogGroupId, Is.EqualTo(settings.LogGroupId));
+            Assert.That(writeRequest.Entries, Has.Count.EqualTo(1));
+        });
     }
 
     [Test]
@@ -85,8 +89,9 @@ public class YandexCloudSinkTests
 
         logger.Write(LogEventLevel.Information, "test message");
 
-        var writeRequest = ingestionServiceMock.Invocations.First().Arguments[0] as WriteRequest;
+        var writeRequest = ingestionServiceMock.Invocations[0].Arguments[0] as WriteRequest;
 
+        Assert.That(writeRequest, Is.Not.Null);
         var customPropertyField = writeRequest.Entries[0].JsonPayload.Fields["CustomScalarProperty"].StringValue;
 
         Assert.That(customPropertyField, Is.EqualTo("property value"));
@@ -97,10 +102,7 @@ public class YandexCloudSinkTests
     {
         var ingestionServiceMock = CreateIngestionServiceMock();
 
-        var settings = new YandexCloudSinkSettings
-        {
-            LogGroupId = Guid.NewGuid().ToString(),
-        };
+        var settings = new YandexCloudSinkSettings { LogGroupId = Guid.NewGuid().ToString(), };
 
         var sink = new YandexCloudSink(ingestionServiceMock.Object, settings);
 
@@ -112,14 +114,15 @@ public class YandexCloudSinkTests
 
         logger.Write(LogEventLevel.Information, "test message");
 
-        var writeRequest = ingestionServiceMock.Invocations.First().Arguments[0] as WriteRequest;
+        var writeRequest = ingestionServiceMock.Invocations[0].Arguments[0] as WriteRequest;
 
+        Assert.That(writeRequest, Is.Not.Null);
         var customPropertyField = writeRequest.Entries[0].JsonPayload.Fields["CustomListProperty"].ListValue;
 
-        Assert.That(customPropertyField.Values.Count, Is.EqualTo(3));
-        Assert.That(customPropertyField.Values.Contains(Value.ForString("1")));
-        Assert.That(customPropertyField.Values.Contains(Value.ForString("string value")));
-        Assert.That(customPropertyField.Values.Contains(Value.ForString("true")));
+        Assert.That(customPropertyField.Values, Has.Count.EqualTo(3));
+        Assert.That(customPropertyField.Values, Does.Contain(Value.ForString("1")));
+        Assert.That(customPropertyField.Values, Does.Contain(Value.ForString("string value")));
+        Assert.That(customPropertyField.Values, Does.Contain(Value.ForString("true")));
     }
 
     [Test]
@@ -141,7 +144,8 @@ public class YandexCloudSinkTests
 
         logger.Write(LogEventLevel.Information, "Hello, {CustomText:l}!", "World");
 
-        var writeRequest = ingestionServiceMock.Invocations.First().Arguments[0] as WriteRequest;
+        var writeRequest = ingestionServiceMock.Invocations[0].Arguments[0] as WriteRequest;
+        Assert.That(writeRequest, Is.Not.Null);
         Assert.That(writeRequest.Entries.First().Message, Is.EqualTo("Hello, World!"));
 
         var customPropertyField = writeRequest.Entries[0].JsonPayload.Fields["CustomText"].StringValue;
@@ -159,7 +163,7 @@ public class YandexCloudSinkTests
                 It.IsAny<Metadata>(),
                 It.IsAny<DateTime?>(),
                 It.IsAny<CancellationToken>()))
-            .Returns((WriteRequest r, Metadata m, DateTime? d, CancellationToken ct) =>
+            .Returns((WriteRequest _, Metadata _, DateTime? _, CancellationToken _) =>
             {
                 return TestCalls.AsyncUnaryCall(
                     Task.FromResult(valueFactory()),
@@ -175,7 +179,7 @@ public class YandexCloudSinkTests
     private static Mock<LogIngestionServiceClient> CreateIngestionServiceMock() => 
         CreateIngestionServiceMockFromLambda(() => new WriteResponse());
 
-    class WrapperSink : ILogEventSink
+    private class WrapperSink : ILogEventSink
     {
         private readonly YandexCloudSink _sink;
 
@@ -186,6 +190,5 @@ public class YandexCloudSinkTests
 
         public void Emit(LogEvent logEvent) => 
             _sink.EmitBatchAsync(new[] { logEvent }).Wait();
-
     }
 }

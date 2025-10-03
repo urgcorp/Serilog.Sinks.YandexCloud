@@ -18,7 +18,7 @@ public class TemplateTokensRenderingTests
     }
 
     [Test]
-    public void PropertyTokensShouldBeSubsttutedInMessageTextAndAddedToThePayload()
+    public void PropertyTokensShouldBeSubstitutedInMessageTextAndAddedToThePayload()
     {
         var messageTemplate = new MessageTemplate("message text with {substitution}", new MessageTemplateToken[]
         {
