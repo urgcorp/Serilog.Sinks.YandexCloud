@@ -1,19 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Google.Protobuf.WellKnownTypes;
+﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Grpc.Core.Testing;
 using Moq;
-using Serilog.Context;
 using Serilog.Core;
 using Serilog.Debugging;
 using Serilog.Events;
-using Serilog.Sinks.PeriodicBatching;
-using Yandex.Cloud.Billing.V1;
-using Yandex.Cloud.Iam.V1;
 using Yandex.Cloud.Logging.V1;
 using static Yandex.Cloud.Logging.V1.LogIngestionService;
 

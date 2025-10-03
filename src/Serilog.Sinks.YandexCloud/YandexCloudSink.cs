@@ -1,5 +1,4 @@
-﻿using Serilog.Core;
-using Serilog.Debugging;
+﻿using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
 using Yandex.Cloud.Logging.V1;

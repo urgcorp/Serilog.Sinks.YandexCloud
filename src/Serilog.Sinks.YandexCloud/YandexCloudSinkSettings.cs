@@ -1,6 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using Yandex.Cloud.Logging.V1;
-using Yandex.Cloud.Resourcemanager.V1;
 
 namespace Serilog.Sinks.YandexCloud
 {
