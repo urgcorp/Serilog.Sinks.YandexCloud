@@ -82,4 +82,18 @@ public class EventPropertiesRenderingTests
         Assert.That(listValue.Values[1].StringValue, Is.EqualTo("another text"));
     }
 
+    [Test]
+    public void ExceptionShouldBeConvertedToProtobuf()
+    {
+        var messageTemplate = new MessageTemplate(Array.Empty<MessageTemplateToken>());
+
+        var serilogEntry = new LogEvent(DateTimeOffset.UtcNow, LogEventLevel.Error, new Exception("ErrorMessage"),
+            messageTemplate, Enumerable.Empty<LogEventProperty>());
+
+        var yandexEntry = serilogEntry.ToIncomingLogEntry();
+
+        Assert.That(yandexEntry.JsonPayload.Fields.ContainsKey("Exception"));
+
+        Assert.That(yandexEntry.JsonPayload.Fields["Exception"].StringValue, Contains.Substring("ErrorMessage"));
+    }
 }
