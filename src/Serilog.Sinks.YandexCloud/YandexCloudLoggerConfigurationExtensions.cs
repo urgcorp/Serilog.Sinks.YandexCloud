@@ -9,32 +9,45 @@ namespace Serilog.Sinks.YandexCloud;
 
 public static class YandexCloudLoggerConfigurationExtensions
 {
-    public static LoggerConfiguration YandexCloud(this LoggerSinkConfiguration sinkConfiguration,
-        ICredentialsProvider credentialsProvider,
-        Action<YandexCloudSinkSettings> configureSink,
-        Action<PeriodicBatchingSinkOptions>? configureBatching = null)
+    private static PeriodicBatchingSinkOptions CreateDefaultBatchOptions()
     {
-        var sdk = new Sdk(credentialsProvider);
-
-        var settings = new YandexCloudSinkSettings();
-        configureSink.Invoke(settings);
-
-        settings.Validate();
-
-        var sink = new YandexCloudSink(sdk.Services.Logging.LogIngestionService, settings);
-
-        var batchingOptions = new PeriodicBatchingSinkOptions
+        return new PeriodicBatchingSinkOptions
         {
             BatchSizeLimit = 100,
             Period = TimeSpan.FromSeconds(2),
             QueueLimit = 1000,
             EagerlyEmitFirstEvent = true
         };
+    }
+
+    private static PeriodicBatchingSinkOptions CreateBatchOptions(Action<PeriodicBatchingSinkOptions>? configureBatching)
+    {
+        var batchingOptions = CreateDefaultBatchOptions();
         configureBatching?.Invoke(batchingOptions);
+        return batchingOptions;
+    }
 
-        var batchingSink = new PeriodicBatchingSink(sink, batchingOptions);
+    public static LoggerConfiguration YandexCloud(this LoggerSinkConfiguration sinkConfiguration,
+        ICredentialsProvider credentialsProvider,
+        YandexCloudSinkSettings sinkSettings,
+        PeriodicBatchingSinkOptions? batchOptions = null)
+    {
+        var sdk = new Sdk(credentialsProvider);
+        sinkSettings.Validate();
 
+        var sink = new YandexCloudSink(sdk.Services.Logging.LogIngestionService, sinkSettings);
+
+        var batchingSink = new PeriodicBatchingSink(sink, batchOptions ?? CreateDefaultBatchOptions());
         return sinkConfiguration.Sink(batchingSink);
+    }
+
+    public static LoggerConfiguration YandexCloud(this LoggerSinkConfiguration sinkConfiguration,
+        ICredentialsProvider credentialsProvider,
+        YandexCloudSinkSettings sinkSettings,
+        Action<PeriodicBatchingSinkOptions>? configureBatching)
+    {
+        var batchingOptions = CreateBatchOptions(configureBatching);
+        return sinkConfiguration.YandexCloud(credentialsProvider, sinkSettings, batchingOptions);
     }
 
     public static LoggerConfiguration YandexCloud(this LoggerSinkConfiguration sinkConfiguration,
@@ -45,10 +58,7 @@ public static class YandexCloudLoggerConfigurationExtensions
         string? logGroupId = null,
         string? resourceId = null,
         string? resourceType = null,
-        int batchSizeLimit = 100,
-        int periodMs = 2000,
-        int queueLimit = 1000,
-        bool eagerlyEmitFirstEvent = true)
+        PeriodicBatchingSinkOptions? batchOptions = null)
     {
         var credentials = new IamJwtCredentialsConfiguration 
         {
@@ -58,26 +68,19 @@ public static class YandexCloudLoggerConfigurationExtensions
         };
         var credentialsProvider = new IamJwtCredentialsProvider(credentials);
 
-        return sinkConfiguration.YandexCloud(
-            credentialsProvider, settings =>
-            {
-                settings.FolderId = folderId;
-                settings.LogGroupId = logGroupId;
-                settings.ResourceId = resourceId;
-                settings.ResourceType = resourceType;
-            },
-            batching =>
-            {
-                batching.BatchSizeLimit = batchSizeLimit;
-                batching.Period = TimeSpan.FromMilliseconds(periodMs);
-                batching.QueueLimit = queueLimit;
-                batching.EagerlyEmitFirstEvent = eagerlyEmitFirstEvent;
-            });
+        var settings = new YandexCloudSinkSettings()
+        {
+            FolderId = folderId,
+            LogGroupId = logGroupId,
+            ResourceId = resourceId,
+            ResourceType = resourceType,
+        };
+        return sinkConfiguration.YandexCloud(credentialsProvider, settings, batchOptions);
     }
 
     public static LoggerConfiguration YandexCloud(this LoggerSinkConfiguration sinkConfiguration,
         string iamKeyFilePath,
-        Action<YandexCloudSinkSettings> configureSink,
+        YandexCloudSinkSettings sinkSettings,
         Action<PeriodicBatchingSinkOptions>? configureBatching = null)
     {
         string keyPath = iamKeyFilePath;
@@ -96,6 +99,6 @@ public static class YandexCloudLoggerConfigurationExtensions
             throw new ApplicationException("IAM token file format error");
 
         var credentialsProvider = new IamJwtCredentialsProvider(credentials);
-        return sinkConfiguration.YandexCloud(credentialsProvider, configureSink, configureBatching);
+        return sinkConfiguration.YandexCloud(credentialsProvider, sinkSettings, configureBatching);
     }
 }
