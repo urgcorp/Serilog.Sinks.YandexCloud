@@ -12,18 +12,12 @@ public class YandexCloudSinkSettings
     public string? ResourceId { get; set; }
     public string? ResourceType { get; set; }
 
-    private HashSet<System.Type>? _wrapperExceptions = [typeof(TargetInvocationException)];
-
     /// <summary>
     /// Gets set of outer exceptions that will be stripped, leaving only the valuable inner exception.
     /// This can be used when a wrapper exception, e.g. <see cref="TargetInvocationException"/>, contains the actual
     /// exception as the InnerException.
     /// </summary>
-    public HashSet<System.Type> WrapperExceptions
-    {
-        get => _wrapperExceptions ??= [];
-        set => _wrapperExceptions = value;
-    }
+    public HashSet<System.Type>? WrapperExceptions { get; set; } = [typeof(TargetInvocationException)];
 
     public void Validate()
     {
