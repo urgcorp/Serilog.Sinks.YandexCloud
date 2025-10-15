@@ -2,6 +2,7 @@
 using Serilog.Parsing;
 
 namespace Serilog.Sinks.YandexCloud.Tests.Unit;
+
 public class TemplateTokensRenderingTests
 {
     [Test]

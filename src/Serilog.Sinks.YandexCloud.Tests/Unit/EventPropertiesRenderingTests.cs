@@ -1,5 +1,4 @@
 using Serilog.Events;
-using Serilog.Parsing;
 
 namespace Serilog.Sinks.YandexCloud.Tests.Unit;
 
@@ -89,8 +88,10 @@ public class EventPropertiesRenderingTests
 
         var yandexEntry = serilogEntry.ToIncomingLogEntry();
 
-        Assert.That(yandexEntry.JsonPayload.Fields.ContainsKey("Exception"));
+        Assert.That(yandexEntry.JsonPayload.Fields.ContainsKey("exceptions"));
 
-        Assert.That(yandexEntry.JsonPayload.Fields["Exception"].StringValue, Contains.Substring("ErrorMessage"));
+        var exceptionsList = yandexEntry.JsonPayload.Fields["exceptions"].ListValue;
+        Assert.That(exceptionsList.Values.Count, Is.EqualTo(1));
+        Assert.That(exceptionsList.Values[0].StructValue.Fields["message"].StringValue, Is.EqualTo("ErrorMessage"));
     }
 }

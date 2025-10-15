@@ -189,6 +189,6 @@ public class YandexCloudSinkTests
         }
 
         public void Emit(LogEvent logEvent) => 
-            _sink.EmitBatchAsync(new[] { logEvent }).Wait();
+            _sink.EmitBatchAsync([logEvent]).Wait();
     }
 }
