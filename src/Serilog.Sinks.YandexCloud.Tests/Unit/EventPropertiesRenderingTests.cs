@@ -8,7 +8,7 @@ public class EventPropertiesRenderingTests
     [Test]
     public void ScalarEventPropertiesShouldBeConvertedToProtobuf()
     {
-        var messageTemplate = new MessageTemplate(Array.Empty<MessageTemplateToken>());
+        var messageTemplate = new MessageTemplate([]);
 
         var eventProperties = new[]
         {
@@ -28,18 +28,16 @@ public class EventPropertiesRenderingTests
     [Test]
     public void StructEventPropertiesShouldBeConvertedToProtobuf()
     {
-        var messageTemplate = new MessageTemplate(Array.Empty<MessageTemplateToken>());
+        var messageTemplate = new MessageTemplate([]);
 
         var eventProperties = new[]
         {
-            new LogEventProperty("structValue", new StructureValue(new[]
-            {
+            new LogEventProperty("structValue", new StructureValue([
                 new LogEventProperty("field1", new ScalarValue("a text")),
-                new LogEventProperty("field2", new StructureValue(new[]
-                {
+                new LogEventProperty("field2", new StructureValue([
                     new LogEventProperty("field2_1", new ScalarValue("another text"))
-                }))
-            }))
+                ]))
+            ]))
         };
 
         var serilogEntry = new LogEvent(DateTimeOffset.UtcNow, LogEventLevel.Information, null,
@@ -59,15 +57,14 @@ public class EventPropertiesRenderingTests
     [Test]
     public void SequenceEventPropertiesShouldBeConvertedToProtobuf()
     {
-        var messageTemplate = new MessageTemplate(Array.Empty<MessageTemplateToken>());
+        var messageTemplate = new MessageTemplate([]);
 
         var eventProperties = new[]
         {
-            new LogEventProperty("listValue", new SequenceValue(new[]
-            {
+            new LogEventProperty("listValue", new SequenceValue([
                 new ScalarValue("a text"),
                 new ScalarValue("another text")
-            }))
+            ]))
         };
 
         var serilogEntry = new LogEvent(DateTimeOffset.UtcNow, LogEventLevel.Information, null,
@@ -85,10 +82,10 @@ public class EventPropertiesRenderingTests
     [Test]
     public void ExceptionShouldBeConvertedToProtobuf()
     {
-        var messageTemplate = new MessageTemplate(Array.Empty<MessageTemplateToken>());
+        var messageTemplate = new MessageTemplate([]);
 
         var serilogEntry = new LogEvent(DateTimeOffset.UtcNow, LogEventLevel.Error, new Exception("ErrorMessage"),
-            messageTemplate, Enumerable.Empty<LogEventProperty>());
+            messageTemplate, []);
 
         var yandexEntry = serilogEntry.ToIncomingLogEntry();
 

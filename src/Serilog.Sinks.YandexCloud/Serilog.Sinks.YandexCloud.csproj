@@ -7,14 +7,15 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 		<RepositoryType>git</RepositoryType>
-		<RepositoryUrl>https://github.com/skytecs/Serilog.Sinks.YandexCloud</RepositoryUrl>
-		<PackageProjectUrl>https://github.com/skytecs/Serilog.Sinks.YandexCloud</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/urgcorp/Serilog.Sinks.YandexCloud</RepositoryUrl>
+		<PackageProjectUrl>https://github.com/urgcorp/Serilog.Sinks.YandexCloud</PackageProjectUrl>
 		<Title>Serilog Sink for Yandex Cloud Logging</Title>
 		<Description>Write Serilog events to the Yandex Cloud Logging service.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="3.1.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.1" />
+		<PackageReference Include="Serilog.Sinks.PeriodicBatching" Version="5.0.0" />
 		<PackageReference Include="Yandex.Cloud.SDK" Version="1.4.1" />
 		<PackageReference Include="YandexCloud.IamJwtCredentials" Version="1.0.2" />
 	</ItemGroup>
