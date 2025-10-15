@@ -1,8 +1,25 @@
 # Serilog.Sinks.YandexCloud
-Serilog Sink for Yandex Cloud logging
+Flexible Serilog Sink for Yandex Cloud logging
 
-Setup via appsettings.json:
+## Setup
+
+### Using IAM token file
+You can download token file from your Cloud Console and use it directly when configuring
+
+```csharp
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    /* ... */
+    .WriteTo.YandexCloud("Secrets/key.json", new YandexCloudSinkSettings(), batching =>
+    {
+        batching.BatchSizeLimit = 200;
+        batching.Period = TimeSpan.FromSeconds(10);
+    }));
 ```
+
+### Using appsettings.json:
+```json
+{
   "Serilog": {
     "Using": [ "Serilog.Sinks.YandexCloud" ],
     "WriteTo": [
@@ -21,16 +38,47 @@ Setup via appsettings.json:
       }
     ]
   }
+}
 ```
-## How to use the sink in gRPC services.
-Due to the known issue with the .net gRPC compiler you could encounter the following build error:
-```
-error CS0433: The type 'AnnotationsReflection' exists in both 'Google.Api.CommonProtos, Version=2.5.0.0, Culture=neutral, PublicKeyToken=3ec5ea7f18953e47' and 'Yandex.Cloud.Protos, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null'
-```
-One possible workaround is to add the following nuget package to your service explicitly.
 
+## Examples
+
+#### Simple
+```csharp
+Logger.LogInformation($"Test request handle delay is set to {rndDelay} ms.");
 ```
-    <PackageReference Include="Yandex.Cloud.Protos" Version="1.2.0">
-      <Aliases>yandex_protos</Aliases>
-    </PackageReference>
+_Test request handle delay is set to 95 ms._
+```json
+{
+  "ConnectionId": "0HNGC2KE59T58",
+  "RequestId": "0HNGC2KE59T58:00000001",
+  "RequestPath": "/test"
+}
+```
+
+#### Exception
+```csharp
+var ex = new HttpRequestException("Requested Test Exception");
+_logger.LogError(exception, "Error processing request after {RequestDurationMs} ms.",
+    (long)elapsed.TotalMilliseconds);
+/* Handler in Middleware */
+```
+_Error processing request after 274 ms._
+```json
+{
+  "ConnectionId": "0HNGC2KE59T58",
+  "RequestDurationMs": 274,
+  "RequestId": "0HNGC2KE59T58:00000001",
+  "RequestPath": "/test",
+  "exceptions": [
+    {
+      "message": "Requested Test Exception",
+      "stack_trace": [
+        "at LoggerApp.TEST.TestRequestHandler.Handle(TestRequest e, CancellationToken cancellationToken) in .../LoggerApp/TEST/TestRequestHandler.cs:line 25",
+        "at LoggerApp.TEST.TestMiddleware.InvokeAsync(HttpContext context) in .../LoggerApp/TEST/TestMiddleware.cs:line 49"
+      ],
+      "type": "System.Net.Http.HttpRequestException"
+    }
+  ]
+}
 ```
