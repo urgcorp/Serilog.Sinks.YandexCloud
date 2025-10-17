@@ -1,6 +1,8 @@
 # Serilog.Sinks.YandexCloud
 Flexible Serilog Sink for Yandex Cloud logging
 
+Generate structured exception details for logged exceptions and unwrap nested exceptions.
+
 ## Setup
 
 ### Using IAM token file
@@ -41,7 +43,69 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 }
 ```
 
-## Examples
+### Separate logger without scoped data
+To prevent log context leaking to other parts of the application,
+you can have different loggers without using scoped data using the same sink.
+
+```csharp
+public interface IAppLogger<out T> : ILogger<T>
+{ }
+
+public class AppLoggerAdapter<T> : IAppLogger<T>
+{
+    private readonly ILogger _logger;
+
+    public AppLoggerAdapter(Serilog.ILogger rootLogger)
+    {
+        _logger = new SerilogLoggerFactory(rootLogger, dispose: false)
+            .CreateLogger(typeof(T).FullName ?? typeof(T).Name);
+    }
+
+    public IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        => _logger.BeginScope(state);
+
+    public bool IsEnabled(LogLevel logLevel)
+        => _logger.IsEnabled(logLevel);
+
+    public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+        Func<TState, Exception?, string> formatter)
+    {
+        using (Serilog.Context.LogContext.Suspend())
+        {
+            _logger.Log(logLevel, eventId, state, exception, formatter);
+        }
+    }
+}
+```
+
+Then register separate configuration
+
+```csharp
+var yandexSink = YandexCloudSink.CreateBatchingSink(credentialsProvider, sinkSettings);
+
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.WithProperty("InstanceId", services.GetRequiredService<IInstanceIdProvider>().InstanceId)
+        .Enrich.FromLogContext()
+        .WriteTo.Sink(yandexSink);
+});
+
+builder.Services.AddSingleton(typeof(IAppLogger<>), typeof(AppLoggerAdapter<>));
+builder.Services.AddSingleton(sp =>
+{
+    // Second logger without FromLogContext, using same sink
+    var appLoggerConfig = new LoggerConfiguration()
+        .Enrich.WithProperty("InstanceId", sp.GetRequiredService<IInstanceIdProvider>().InstanceId)
+        .WriteTo.Sink(yandexSink);
+
+    return appLoggerConfig.CreateLogger();
+});
+```
+
+## Preview
 
 #### Simple
 ```csharp
