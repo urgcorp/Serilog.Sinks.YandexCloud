@@ -1,12 +1,14 @@
 ﻿using Serilog.Debugging;
 using Serilog.Events;
 using Serilog.Sinks.PeriodicBatching;
+using Yandex.Cloud;
+using Yandex.Cloud.Credentials;
 using Yandex.Cloud.Logging.V1;
 using static Yandex.Cloud.Logging.V1.LogIngestionService;
 
 namespace Serilog.Sinks.YandexCloud;
 
-internal class YandexCloudSink : IBatchedLogEventSink
+public class YandexCloudSink : IBatchedLogEventSink
 {
     public const string YC_STREAM_NAME_PROPERTY = "SourceContext";
 
@@ -37,6 +39,9 @@ internal class YandexCloudSink : IBatchedLogEventSink
         }
     }
 
+    public YandexCloudSink(Sdk sdk, YandexCloudSinkSettings settings) : this(sdk.Services.Logging.LogIngestionService, settings)
+    { }
+
     public async Task EmitBatchAsync(IEnumerable<LogEvent> batch)
     {
         try
@@ -60,4 +65,43 @@ internal class YandexCloudSink : IBatchedLogEventSink
     }
 
     public Task OnEmptyBatchAsync() => Task.CompletedTask;
+
+    public static PeriodicBatchingSinkOptions CreateDefaultBatchOptions()
+    {
+        return new PeriodicBatchingSinkOptions
+        {
+            BatchSizeLimit = 100,
+            Period = TimeSpan.FromSeconds(2),
+            QueueLimit = 1000,
+            EagerlyEmitFirstEvent = true
+        };
+    }
+
+    public static PeriodicBatchingSinkOptions CreateBatchOptions(Action<PeriodicBatchingSinkOptions>? configureBatching)
+    {
+        var batchingOptions = CreateDefaultBatchOptions();
+        configureBatching?.Invoke(batchingOptions);
+        return batchingOptions;
+    }
+
+    public static PeriodicBatchingSink CreateBatchingSink(
+        ICredentialsProvider credentialsProvider,
+        YandexCloudSinkSettings sinkSettings,
+        PeriodicBatchingSinkOptions? batchOptions = null)
+    {
+        var sdk = new Sdk(credentialsProvider);
+        sinkSettings.Validate();
+
+        var sink = new YandexCloudSink(sdk, sinkSettings);
+        return new PeriodicBatchingSink(sink, batchOptions ?? CreateDefaultBatchOptions());
+    }
+
+    public static PeriodicBatchingSink CreateBatchingSink(
+        ICredentialsProvider credentialsProvider,
+        YandexCloudSinkSettings sinkSettings,
+        Action<PeriodicBatchingSinkOptions>? configureBatching)
+    {
+        var batchingOptions = CreateBatchOptions(configureBatching);
+        return CreateBatchingSink(credentialsProvider, sinkSettings, batchingOptions);
+    }
 }
