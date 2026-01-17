@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{1DB48CA0-7A92-4E69-A5D9-AF69840473E2}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
+		nupkg-release-push.sh = nupkg-release-push.sh
 	EndProjectSection
 EndProject
 Global
@@ -32,5 +33,7 @@ Global
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8AA63214-5541-4AA9-B983-FFFDFA22EF92}
+	EndGlobalSection
+	GlobalSection(RiderSharedRunConfigurations) = postSolution
 	EndGlobalSection
 EndGlobal
