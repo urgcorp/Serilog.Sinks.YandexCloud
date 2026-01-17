@@ -123,7 +123,7 @@ _Test request handle delay is set to 95 ms._
 #### Exception
 ```csharp
 var ex = new HttpRequestException("Requested Test Exception");
-_logger.LogError(exception, "Error processing request after {RequestDurationMs} ms.",
+_logger.LogError(ex, "Error processing request after {RequestDurationMs} ms.",
     (long)elapsed.TotalMilliseconds);
 /* Handler in Middleware */
 ```
