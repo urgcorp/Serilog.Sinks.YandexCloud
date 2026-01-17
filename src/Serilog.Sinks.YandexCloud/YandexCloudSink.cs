@@ -10,6 +10,31 @@ namespace Serilog.Sinks.YandexCloud;
 
 public class YandexCloudSink : IBatchedLogEventSink
 {
+    #region Yandex Cloud defaults for PeriodicBatchingSinkOptions
+    /// <summary>
+    /// <see cref="PeriodicBatchingSinkOptions.BatchSizeLimit"/>
+    /// </summary>
+    public const int DefaultBatchSizeLimit = 100;
+
+    /// <summary>
+    /// <see cref="PeriodicBatchingSinkOptions.Period"/>
+    /// </summary>
+    public const int DefaultBatchPeriodMs = 2000;
+
+    /// <summary>
+    /// <see cref="PeriodicBatchingSinkOptions.QueueLimit"/>
+    /// </summary>
+    public const int DefaultBatchQueueLimit = 1000;
+
+    /// <summary>
+    /// <see cref="PeriodicBatchingSinkOptions.EagerlyEmitFirstEvent"/>
+    /// </summary>
+    public const bool DefaultBatchEagerlyEmitFirstEvent = true;    
+    #endregion
+
+    /// <summary>
+    /// Name of <see cref="LogEvent"/> property key that represent <see cref="IncomingLogEntry.StreamName"/>
+    /// </summary>
     public const string YC_STREAM_NAME_PROPERTY = "SourceContext";
 
     private readonly LogIngestionServiceClient _logIngestionService;
@@ -66,17 +91,24 @@ public class YandexCloudSink : IBatchedLogEventSink
 
     public Task OnEmptyBatchAsync() => Task.CompletedTask;
 
+    /// <summary>
+    /// Creates <see cref="PeriodicBatchingSinkOptions"/> using Yandex Cloud Sink defaults
+    /// </summary>
     public static PeriodicBatchingSinkOptions CreateDefaultBatchOptions()
     {
         return new PeriodicBatchingSinkOptions
         {
-            BatchSizeLimit = 100,
-            Period = TimeSpan.FromSeconds(2),
-            QueueLimit = 1000,
-            EagerlyEmitFirstEvent = true
+            BatchSizeLimit = DefaultBatchSizeLimit,
+            Period = TimeSpan.FromMilliseconds(DefaultBatchPeriodMs),
+            QueueLimit = DefaultBatchQueueLimit,
+            EagerlyEmitFirstEvent = DefaultBatchEagerlyEmitFirstEvent
         };
     }
 
+    /// <summary>
+    /// Creates <see cref="PeriodicBatchingSinkOptions"/> using Yandex Cloud Sink defaults
+    /// </summary>
+    /// <param name="configureBatching">Configure defaults</param>
     public static PeriodicBatchingSinkOptions CreateBatchOptions(Action<PeriodicBatchingSinkOptions>? configureBatching)
     {
         var batchingOptions = CreateDefaultBatchOptions();
@@ -101,7 +133,7 @@ public class YandexCloudSink : IBatchedLogEventSink
         YandexCloudSinkSettings sinkSettings,
         Action<PeriodicBatchingSinkOptions>? configureBatching)
     {
-        var batchingOptions = CreateBatchOptions(configureBatching);
+        var batchingOptions = CreateBatchOptions(configureBatching: configureBatching);
         return CreateBatchingSink(credentialsProvider, sinkSettings, batchingOptions);
     }
 }

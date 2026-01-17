@@ -8,6 +8,40 @@ namespace Serilog.Sinks.YandexCloud;
 
 public static class YandexCloudLoggerConfigurationExtensions
 {
+    /// <summary></summary>
+    /// <param name="sinkSettings"></param>
+    /// <param name="iamKeyFilePath"></param>
+    /// <param name="configureBatching"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidDataException">Failed to deserialize IAM token file</exception>
+    public static PeriodicBatchingSink CreateYandexCloudSink(this YandexCloudSinkSettings sinkSettings,
+        string iamKeyFilePath,
+        Action<PeriodicBatchingSinkOptions>? configureBatching = null)
+    {
+        if (string.IsNullOrWhiteSpace(iamKeyFilePath))
+            throw new ArgumentException("Yandex Cloud IAM token path required");
+
+        if (!EnsureIamKeyFileExists(iamKeyFilePath, out var keyPath))
+            throw new FileNotFoundException("Yandex Cloud IAM token file not found", iamKeyFilePath);
+
+        var keyJson = File.ReadAllText(keyPath);
+        var iamToken = System.Text.Json.JsonSerializer.Deserialize<IamJwtCredentialsConfiguration>(keyJson);
+        if (iamToken == null)
+            throw new InvalidDataException("IAM token file deserialization failed");
+
+        var credentialsProvider = new IamJwtCredentialsProvider(iamToken);
+        return YandexCloudSink.CreateBatchingSink(credentialsProvider, sinkSettings, configureBatching);
+    }
+
+    public static LoggerConfiguration YandexCloud(this LoggerSinkConfiguration sinkConfiguration,
+        string iamKeyFilePath,
+        YandexCloudSinkSettings sinkSettings,
+        Action<PeriodicBatchingSinkOptions>? configureBatching = null)
+    {
+        var sink = sinkSettings.CreateYandexCloudSink(iamKeyFilePath, configureBatching);
+        return sinkConfiguration.Sink(sink);
+    }
+
     public static LoggerConfiguration YandexCloud(this LoggerSinkConfiguration sinkConfiguration,
         ICredentialsProvider credentialsProvider,
         YandexCloudSinkSettings sinkSettings,
@@ -54,27 +88,25 @@ public static class YandexCloudLoggerConfigurationExtensions
         return sinkConfiguration.YandexCloud(credentialsProvider, settings, batchOptions);
     }
 
-    public static LoggerConfiguration YandexCloud(this LoggerSinkConfiguration sinkConfiguration,
-        string iamKeyFilePath,
-        YandexCloudSinkSettings sinkSettings,
-        Action<PeriodicBatchingSinkOptions>? configureBatching = null)
+    private static bool EnsureIamKeyFileExists(string iamKeyFilePath, out string keyPath)
     {
-        string keyPath = iamKeyFilePath;
-        bool keyExists = File.Exists(keyPath);
-        if (!keyExists && !Path.IsPathFullyQualified(keyPath))
+        if (File.Exists(iamKeyFilePath))
         {
-            keyPath = Path.Combine(AppContext.BaseDirectory, keyPath);
-            keyExists = File.Exists(keyPath);
+            keyPath = iamKeyFilePath;
+            return true;
         }
-        if (!keyExists)
-            throw new FileNotFoundException("Logging IAM token file not found", iamKeyFilePath);
 
-        var keyJson = File.ReadAllText(iamKeyFilePath);
-        var credentials = System.Text.Json.JsonSerializer.Deserialize<IamJwtCredentialsConfiguration>(keyJson);
-        if (credentials == null)
-            throw new ApplicationException("IAM token file format error");
+        if (!Path.IsPathFullyQualified(iamKeyFilePath))
+        {
+            var fullPath = Path.Combine(AppContext.BaseDirectory, iamKeyFilePath);
+            if (File.Exists(fullPath))
+            {
+                keyPath = fullPath;
+                return true;
+            }
+        }
 
-        var credentialsProvider = new IamJwtCredentialsProvider(credentials);
-        return sinkConfiguration.YandexCloud(credentialsProvider, sinkSettings, configureBatching);
+        keyPath = iamKeyFilePath;
+        return false;
     }
 }

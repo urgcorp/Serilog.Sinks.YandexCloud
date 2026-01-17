@@ -9,8 +9,7 @@ public static class LogEventExtensions
 {
     internal static Yandex.Cloud.Logging.V1.LogLevel.Types.Level ToLevel(this LogEvent entry)
     {
-        if (entry is null)
-            throw new ArgumentNullException(nameof(entry));
+        ArgumentNullException.ThrowIfNull(entry);
 
         return entry.Level switch
         {
@@ -45,21 +44,21 @@ public static class LogEventExtensions
             {
                 var @struct = new Struct();
                 foreach (var item in structure.Properties)
-                    @struct.Fields.Add(item.Name, ToValue(item.Value));
+                    @struct.Fields.Add(item.Name, item.Value.ToValue());
                 return Value.ForStruct(@struct);
             }
             case SequenceValue list:
             {
                 var listValue = new Value[list.Elements.Count];
                 for (int i = 0; i < list.Elements.Count; i++)
-                    listValue[i] = ToValue(list.Elements[i]);
+                    listValue[i] = list.Elements[i].ToValue();
                 return Value.ForList(listValue);
             }
             case DictionaryValue dv:
             {
                 var @struct = new Struct();
                 foreach (var item in dv.Elements)
-                    @struct.Fields.Add(item.Key.Value?.ToString() ?? "", ToValue(item.Value));
+                    @struct.Fields.Add(item.Key.Value?.ToString() ?? "", item.Value.ToValue());
                 return Value.ForStruct(@struct);
             }
             default:
@@ -69,8 +68,7 @@ public static class LogEventExtensions
 
     internal static IncomingLogEntry ToIncomingLogEntry(this LogEvent entry, IEnumerable<System.Type>? wrapperExceptions = null)
     {
-        if (entry is null)
-            throw new ArgumentNullException(nameof(entry));
+        ArgumentNullException.ThrowIfNull(entry);
 
         var ycEntry = new IncomingLogEntry
         {
@@ -156,12 +154,12 @@ public static class LogEventExtensions
             if (exception is AggregateException ae)
             {
                 foreach (var inner in ae.InnerExceptions)
-                    foreach (var ex in StripWrapperExceptions(inner, wrapperExceptionTypes))
+                    foreach (var ex in inner.StripWrapperExceptions(wrapperExceptionTypes))
                         yield return ex;
             }
             else
             {
-                foreach (var ex in StripWrapperExceptions(exception.InnerException, wrapperExceptionTypes))
+                foreach (var ex in exception.InnerException.StripWrapperExceptions(wrapperExceptionTypes))
                     yield return ex;
             }
         }
