@@ -4,9 +4,11 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <AssemblyVersion>2.0.2</AssemblyVersion>
-        <Version>2.0.2</Version>
+        <AssemblyVersion>2.0.3.1</AssemblyVersion>
+        <Version>2.0.3.1</Version>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+        <NoWarn>$(NoWarn);1591</NoWarn>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <RepositoryType>git</RepositoryType>
         <RepositoryUrl>https://github.com/urgcorp/Serilog.Sinks.YandexCloud</RepositoryUrl>
