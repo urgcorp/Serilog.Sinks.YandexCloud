@@ -57,14 +57,13 @@ namespace Serilog.Sinks.YandexCloud
                 FolderId = !string.IsNullOrWhiteSpace(_settings.FolderId) ? _settings.FolderId : "",
                 LogGroupId = !string.IsNullOrWhiteSpace(_settings.LogGroupId) ? _settings.LogGroupId : ""
             };
-            if (!string.IsNullOrWhiteSpace(_settings.ResourceId) || !string.IsNullOrWhiteSpace(_settings.ResourceType))
+
+            // Type and Id can't be null
+            _resource = new LogEntryResource()
             {
-                _resource = new LogEntryResource()
-                {
-                    Type = !string.IsNullOrWhiteSpace(_settings.ResourceType) ? _settings.ResourceType : null,
-                    Id = !string.IsNullOrWhiteSpace(_settings.ResourceId) ? _settings.ResourceId : null,
-                };
-            }
+                Type = _settings.ResourceType ?? string.Empty,
+                Id = _settings.ResourceId ?? string.Empty
+            };
         }
 
         public YandexCloudSink(Sdk sdk, YandexCloudSinkSettings settings) : this(sdk.Services.Logging.LogIngestionService, settings)

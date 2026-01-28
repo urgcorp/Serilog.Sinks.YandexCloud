@@ -23,24 +23,17 @@ namespace Serilog.Sinks.YandexCloud
         /// </summary>
         public string? LogGroupId { get; set; }
 
-        private string _resourceType = string.Empty;
-        private string _resourceId = string.Empty;
-
         /// <summary>
         /// <para>Resource type</para>
         /// <example><c>serverless.function</c></example>
         /// </summary>
-        public string ResourceType
-        {
-            get => _resourceType;
-            set => _resourceType = value ?? string.Empty;
-        }
+        public string? ResourceType { get; set; }
 
         /// <summary>
-        /// <para>Resource ID</para>
+        /// <para>Resource ID.</para>
         /// <example>ID of the function producing logs</example>
         /// </summary>
-        public string ResourceId { get; set; } = string.Empty;
+        public string? ResourceId { get; set; }
 
         /// <summary>
         /// <para>Gets set of outer exceptions that will be stripped, leaving only the valuable inner exception.</para>
