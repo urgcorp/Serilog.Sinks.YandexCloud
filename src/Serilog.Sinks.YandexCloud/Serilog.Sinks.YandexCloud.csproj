@@ -8,9 +8,9 @@
         <!-- NuGet Package Settings -->
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <PackageId>Serilog.Sink.YandexCloud</PackageId>
-        <AssemblyVersion>2.2.0.0</AssemblyVersion>
-        <Version>2.2.0</Version>
+        <PackageId>Serilog.Sinks.YandexCloud</PackageId>
+        <AssemblyVersion>2.2.1.0</AssemblyVersion>
+        <Version>2.2.1</Version>
         <NoWarn>$(NoWarn);1591</NoWarn>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <RepositoryType>git</RepositoryType>
