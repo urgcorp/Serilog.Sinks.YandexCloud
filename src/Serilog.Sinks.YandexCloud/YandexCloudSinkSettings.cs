@@ -49,12 +49,24 @@ namespace Serilog.Sinks.YandexCloud
 
             if (string.IsNullOrEmpty(FolderId) && string.IsNullOrEmpty(LogGroupId))
                 throw new ArgumentException($"One of {nameof(FolderId)} or {nameof(LogGroupId)} parameters arguments is required.");
-        
-            if (!string.IsNullOrEmpty(ResourceType) && !FieldValidationRegex.IsMatch(ResourceType))
-                throw new ArgumentException($"{nameof(ResourceType)} is in incorrect format.");
 
-            if (!string.IsNullOrEmpty(ResourceId) && !FieldValidationRegex.IsMatch(ResourceId))
-                throw new ArgumentException($"{nameof(ResourceId)} is in incorrect format.");
+            if (!string.IsNullOrEmpty(ResourceType))
+            {
+                if (!FieldValidationRegex.IsMatch(ResourceType))
+                    throw new ArgumentException($"{nameof(ResourceType)} is in incorrect format.");
+
+                if (ResourceType.Length > YandexCloudSink.ResourcePropertyMaxLength)
+                    throw new ArgumentException($"{nameof(ResourceId)} length is limited to {YandexCloudSink.ResourcePropertyMaxLength} characters.");
+            }
+
+            if (!string.IsNullOrEmpty(ResourceId))
+            {
+                if (!FieldValidationRegex.IsMatch(ResourceId))
+                    throw new ArgumentException($"{nameof(ResourceId)} is in incorrect format.");
+
+                if (ResourceId.Length > YandexCloudSink.ResourcePropertyMaxLength)
+                    throw new ArgumentException($"{nameof(ResourceId)} length is limited to {YandexCloudSink.ResourcePropertyMaxLength} characters.");
+            }
 
             if (!string.IsNullOrEmpty(FolderId) && !FieldValidationRegex.IsMatch(FolderId))
                 throw new ArgumentException($"{nameof(FolderId)} is in incorrect format.");
