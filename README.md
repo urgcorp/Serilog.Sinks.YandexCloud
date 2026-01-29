@@ -43,7 +43,33 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 }
 ```
 
-### Separate logger without scoped data
+### Pass ILogger Category Name as Yandex Cloud Logger StreamName
+Use `YcStreamNameCsEnricher` when registering sink  
+It will truncate namespace and leave only class name for which logger was requested  
+
+```csharp
+var yandexSink = sinkSettings.CreateYandexCloudSink(keyPath);
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.With<YcStreamNameCsEnricher>();
+
+    if (yandexSink != null)
+        configuration.WriteTo.Sink(yandexSink);
+});
+```
+
+To manually define Stream Name use `YandexCloudSink.YC_STREAM_NAME_PROPERTY`
+```csharp
+using (LogContext.PushProperty(YandexCloudSink.YC_STREAM_NAME_PROPERTY, "MyStreamName"))
+{
+    logger.LogInformation("...");
+}
+```
+### [Obsolete] Separate logger without scoped data
 To prevent log context leaking to other parts of the application,
 you can have different loggers without using scoped data using the same sink.
 
@@ -117,6 +143,23 @@ _Test request handle delay is set to 95 ms._
   "ConnectionId": "0HNGC2KE59T58",
   "RequestId": "0HNGC2KE59T58:00000001",
   "RequestPath": "/test"
+}
+```
+
+#### Enrich with property
+```csharp
+using (LogContext.PushProperty("Environment", app.Environment.EnvironmentName))
+{
+    logger.LogInformation("Application started");
+}
+```
+
+```json
+{
+  "ConnectionId": "0HNGC2KE59T58",
+  "RequestId": "0HNGC2KE59T58:00000001",
+  "RequestPath": "/test",
+  "Environment": "Development"
 }
 ```
 
