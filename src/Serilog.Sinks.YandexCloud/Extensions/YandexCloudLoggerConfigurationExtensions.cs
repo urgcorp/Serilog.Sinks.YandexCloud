@@ -6,15 +6,16 @@ using Yandex.Cloud.Credentials;
 using YandexCloud.IamJwtCredentials;
 using IamJwtCredentialsProvider = YandexCloud.IamJwtCredentials.IamJwtCredentialsProvider;
 
+// ReSharper disable once CheckNamespace
 namespace Serilog.Sinks.YandexCloud
 {
     public static class YandexCloudLoggerConfigurationExtensions
     {
-        /// <summary></summary>
-        /// <param name="sinkSettings"></param>
-        /// <param name="iamKeyFilePath"></param>
-        /// <param name="configureBatching"></param>
-        /// <returns></returns>
+        /// <summary>Creates Serilog <see cref="PeriodicBatchingSink"/> with given settings using IAM token from file</summary>
+        /// <param name="sinkSettings">Yandex Cloud Logger settings</param>
+        /// <param name="iamKeyFilePath">Path to IAM token file</param>
+        /// <param name="configureBatching">Configure batching sink settings</param>
+        /// <returns>Serilog batching sink</returns>
         /// <exception cref="InvalidDataException">Failed to deserialize IAM token file</exception>
         public static PeriodicBatchingSink CreateYandexCloudSink(this YandexCloudSinkSettings sinkSettings,
             string iamKeyFilePath,

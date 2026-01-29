@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Google.Protobuf.WellKnownTypes;
+using Serilog.Debugging;
 using Serilog.Events;
 using Yandex.Cloud.Logging.V1;
 
+// ReSharper disable once CheckNamespace
 namespace Serilog.Sinks.YandexCloud
 {
     public static class LogEventExtensions
@@ -26,7 +28,6 @@ namespace Serilog.Sinks.YandexCloud
 
                 _ => Yandex.Cloud.Logging.V1.LogLevel.Types.Level.Debug
             };
-
         }
 
         internal static Value ToValue(this LogEventPropertyValue property)
@@ -97,9 +98,25 @@ namespace Serilog.Sinks.YandexCloud
             {
                 if (kvp.Key == YandexCloudSink.YC_STREAM_NAME_PROPERTY)
                 {
-                    ycEntry.StreamName = kvp.Value is ScalarValue sv
-                        ? sv.Value?.ToString()
-                        : kvp.Value.ToString();
+                    // Avoid extra .ToString(), if ScalarValue strings are inside
+                    var rawValue = kvp.Value switch
+                    {
+                        ScalarValue { Value: string s } => s, // Direct extraction with no allocations
+                        ScalarValue { Value: null } => null,
+                        _ => kvp.Value.ToString()
+                    };
+                    if (string.IsNullOrEmpty(rawValue))
+                        continue;
+
+                    // Better leave empty StreamName than lose message
+                    if (rawValue.Length > YandexCloudSink.StreamNameMaxLength)
+                    {
+                        SelfLog.WriteLine("[YandexCloudSink] StreamName length exceeded {0} symbols: {1}",
+                            YandexCloudSink.StreamNameMaxLength, rawValue);
+                    }
+                    else
+                        ycEntry.StreamName = rawValue;
+
                     continue;
                 }
                 payload.Fields.Add(kvp.Key, kvp.Value.ToValue());
@@ -126,7 +143,7 @@ namespace Serilog.Sinks.YandexCloud
             var ex = exception;
             while (ex != null)
             {
-                Struct exPayload = new Struct()
+                var exPayload = new Struct()
                 {
                     Fields =
                     {
@@ -149,7 +166,7 @@ namespace Serilog.Sinks.YandexCloud
         private static Value[] splitStackTrace(string stackTrace)
         {
             var lines = new List<Value>();
-            ReadOnlySpan<char> span = stackTrace.AsSpan();
+            var span = stackTrace.AsSpan();
 
             int start = 0;
             while (start < span.Length)
@@ -157,14 +174,11 @@ namespace Serilog.Sinks.YandexCloud
                 int end = span.Slice(start).IndexOf('\n');
                 int length = (end == -1) ? span.Length - start : end;
     
-                // Получаем сегмент и обрезаем пробелы без создания строки
+                // Get segment and trim spaces without creating new string
                 var segment = span.Slice(start, length).Trim();
     
                 if (segment.Length > 0)
-                {
-                    // Создаем строку только тогда, когда она реально нужна для Value.ForString
                     lines.Add(Value.ForString(segment.ToString()));
-                }
     
                 if (end == -1) break;
                 start += end + 1;
@@ -179,7 +193,7 @@ namespace Serilog.Sinks.YandexCloud
         /// <param name="exception">Exception</param>
         /// <param name="wrapperExceptionTypes">Exception types to strip.</param>
         [SuppressMessage("ReSharper", "PossibleMultipleEnumeration")]
-        private static IEnumerable<Exception> StripWrapperExceptions(this Exception exception, IEnumerable<System.Type>? wrapperExceptionTypes)
+        internal static IEnumerable<Exception> StripWrapperExceptions(this Exception exception, IEnumerable<System.Type>? wrapperExceptionTypes)
         {
             if (exception.InnerException != null && wrapperExceptionTypes != null &&
                 wrapperExceptionTypes.Any() &&
@@ -188,8 +202,10 @@ namespace Serilog.Sinks.YandexCloud
                 if (exception is AggregateException ae)
                 {
                     foreach (var inner in ae.InnerExceptions)
-                    foreach (var ex in inner.StripWrapperExceptions(wrapperExceptionTypes))
-                        yield return ex;
+                    {
+                        foreach (var ex in inner.StripWrapperExceptions(wrapperExceptionTypes))
+                            yield return ex;
+                    }
                 }
                 else
                 {
