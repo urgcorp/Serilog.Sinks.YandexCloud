@@ -1,3 +1,4 @@
+using System.Text;
 using Serilog.Events;
 
 namespace Serilog.Sinks.YandexCloud.Tests.Unit;
@@ -93,5 +94,44 @@ public class EventPropertiesRenderingTests
         var exceptionsList = yandexEntry.JsonPayload.Fields["exceptions"].ListValue;
         Assert.That(exceptionsList.Values.Count, Is.EqualTo(1));
         Assert.That(exceptionsList.Values[0].StructValue.Fields["message"].StringValue, Is.EqualTo("ErrorMessage"));
+    }
+
+    [Test]
+    public void SteamNamePropertyLongValueShouldBeDiscarded()
+    {
+        var messageTemplate = new MessageTemplate([]);
+        var propertyValue = new string('X', YandexCloudSink.StreamNameMaxLength + 1);
+
+        var eventProperties = new[]
+        {
+            new LogEventProperty(YandexCloudSink.YC_STREAM_NAME_PROPERTY, new ScalarValue(propertyValue))
+        };
+
+        var serilogEntry = new LogEvent(DateTimeOffset.UtcNow, LogEventLevel.Information, null,
+            messageTemplate, eventProperties);
+
+        var yandexEntry = serilogEntry.ToIncomingLogEntry();
+
+        Assert.That(string.IsNullOrEmpty(yandexEntry.StreamName));
+    }
+
+    [Test]
+    public void SteamNamePropertyMaxLimitValueShouldBePresented()
+    {
+        var messageTemplate = new MessageTemplate([]);
+        var propertyValue = new string('X', YandexCloudSink.StreamNameMaxLength);
+
+        var eventProperties = new[]
+        {
+            new LogEventProperty(YandexCloudSink.YC_STREAM_NAME_PROPERTY, new ScalarValue(propertyValue))
+        };
+
+        var serilogEntry = new LogEvent(DateTimeOffset.UtcNow, LogEventLevel.Information, null,
+            messageTemplate, eventProperties);
+
+        var yandexEntry = serilogEntry.ToIncomingLogEntry();
+
+        Assert.That(!string.IsNullOrEmpty(yandexEntry.StreamName));
+        Assert.That(yandexEntry.StreamName.Equals(propertyValue));
     }
 }
