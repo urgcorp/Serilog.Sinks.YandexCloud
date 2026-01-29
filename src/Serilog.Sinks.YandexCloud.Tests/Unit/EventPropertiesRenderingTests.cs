@@ -1,4 +1,3 @@
-using System.Text;
 using Serilog.Events;
 
 namespace Serilog.Sinks.YandexCloud.Tests.Unit;
@@ -100,7 +99,7 @@ public class EventPropertiesRenderingTests
     public void SteamNamePropertyLongValueShouldBeDiscarded()
     {
         var messageTemplate = new MessageTemplate([]);
-        var propertyValue = new string('X', YandexCloudSink.StreamNameMaxLength + 1);
+        var propertyValue = new string('X', YandexCloudSink.ResourcePropertyMaxLength + 1);
 
         var eventProperties = new[]
         {
@@ -119,7 +118,7 @@ public class EventPropertiesRenderingTests
     public void SteamNamePropertyMaxLimitValueShouldBePresented()
     {
         var messageTemplate = new MessageTemplate([]);
-        var propertyValue = new string('X', YandexCloudSink.StreamNameMaxLength);
+        var propertyValue = new string('X', YandexCloudSink.ResourcePropertyMaxLength);
 
         var eventProperties = new[]
         {

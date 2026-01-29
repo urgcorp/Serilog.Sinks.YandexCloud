@@ -109,10 +109,10 @@ namespace Serilog.Sinks.YandexCloud
                         continue;
 
                     // Better leave empty StreamName than lose message
-                    if (rawValue.Length > YandexCloudSink.StreamNameMaxLength)
+                    if (rawValue.Length > YandexCloudSink.ResourcePropertyMaxLength)
                     {
                         SelfLog.WriteLine("[YandexCloudSink] StreamName length exceeded {0} symbols: {1}",
-                            YandexCloudSink.StreamNameMaxLength, rawValue);
+                            YandexCloudSink.ResourcePropertyMaxLength, rawValue);
                     }
                     else
                         ycEntry.StreamName = rawValue;

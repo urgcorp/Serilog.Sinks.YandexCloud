@@ -10,7 +10,7 @@ namespace Serilog.Sinks.YandexCloud.Enrichers
     /// </summary>
     /// <remarks>
     /// In .NET, the logging category name (typically the full class name) is passed 
-    /// via the "SourceContext" property. Yandex Cloud Logging has a character limit (<see cref="YandexCloudSink.StreamNameMaxLength"/>)
+    /// via the "SourceContext" property. Yandex Cloud Logging has a character limit (<see cref="YandexCloudSink.ResourcePropertyMaxLength"/>)
     /// for the StreamName field and rejects longer values with an InvalidArgument error.
     /// <br/>
     /// This enricher extracts the short class name from the "SourceContext" 
@@ -21,12 +21,12 @@ namespace Serilog.Sinks.YandexCloud.Enrichers
     {
         public const string LoggerCategoryPropertyName = "SourceContext";
 
-        // Кэшируем результат парсинга для каждого SourceContext
+        // Cache parsing result for each SourceContext
         private static readonly ConcurrentDictionary<string, string> _nameCache = new ConcurrentDictionary<string, string>();
 
         public void Enrich(LogEvent logEvent, ILogEventPropertyFactory propertyFactory)
         {
-            // StreamName уже задан вручную (например, через LogContext)
+            // StreamName is already defined manually (e.g. through LogContext)
             if (logEvent.Properties.ContainsKey(YandexCloudSink.YC_STREAM_NAME_PROPERTY))
                 return;
 
@@ -45,10 +45,12 @@ namespace Serilog.Sinks.YandexCloud.Enrichers
             if (lastDot >= 0)
                 span = span[(lastDot + 1)..];
 
-            if (span.Length > YandexCloudSink.StreamNameMaxLength)
-            {
-                span = span[..YandexCloudSink.StreamNameMaxLength];
-            }
+            if (span.Length > YandexCloudSink.ResourcePropertyMaxLength)
+                span = span[..YandexCloudSink.ResourcePropertyMaxLength];
+
+            // Leave empty if VERY long
+            if (span.Length > YandexCloudSink.ResourcePropertyMaxLength)
+                return string.Empty;
 
             return span.ToString();
         }

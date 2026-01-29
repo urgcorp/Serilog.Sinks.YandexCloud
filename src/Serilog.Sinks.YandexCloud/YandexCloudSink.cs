@@ -40,10 +40,11 @@ namespace Serilog.Sinks.YandexCloud
         /// </summary>
         public const string YC_STREAM_NAME_PROPERTY = "___YC_STREAM_NAME___";
 
-        public static int ResourceIdMaxLength = 63;
-
-        // ReSharper disable once FieldCanBeMadeReadOnly.Global
-        public static int StreamNameMaxLength = 63;
+        /// <summary>
+        /// <para>Max length for Yandex Cloud log events properties: Resource Type, ResourceId and Stream Name</para>
+        /// <remarks></remarks>
+        /// </summary>
+        public static int ResourcePropertyMaxLength = 63;
 
         private readonly LogIngestionServiceClient _logIngestionService;
         private readonly YandexCloudSinkSettings _settings;
@@ -56,14 +57,11 @@ namespace Serilog.Sinks.YandexCloud
             _logIngestionService = logIngestionService ?? throw new ArgumentNullException(nameof(logIngestionService));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
 
-            if (_settings.ResourceId != null && _settings.ResourceId.Length > ResourceIdMaxLength)
-                throw new ArgumentException($"Resource ID is limited at {ResourceIdMaxLength} characters.");
-
             // This values doesn't change until the configuration changes
             _destination = new Destination()
             {
-                FolderId = !string.IsNullOrWhiteSpace(_settings.FolderId) ? _settings.FolderId : "",
-                LogGroupId = !string.IsNullOrWhiteSpace(_settings.LogGroupId) ? _settings.LogGroupId : ""
+                FolderId = !string.IsNullOrWhiteSpace(_settings.FolderId) ? _settings.FolderId : string.Empty,
+                LogGroupId = !string.IsNullOrWhiteSpace(_settings.LogGroupId) ? _settings.LogGroupId : string.Empty
             };
 
             // Type and Id can't be null
