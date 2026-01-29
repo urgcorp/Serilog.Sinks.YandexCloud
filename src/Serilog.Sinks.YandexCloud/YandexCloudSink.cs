@@ -38,7 +38,12 @@ namespace Serilog.Sinks.YandexCloud
         /// <summary>
         /// Name of <see cref="LogEvent"/> property key that represent <see cref="IncomingLogEntry.StreamName"/>
         /// </summary>
-        public const string YC_STREAM_NAME_PROPERTY = "SourceContext";
+        public const string YC_STREAM_NAME_PROPERTY = "___YC_STREAM_NAME___";
+
+        public static int ResourceIdMaxLength = 63;
+
+        // ReSharper disable once FieldCanBeMadeReadOnly.Global
+        public static int StreamNameMaxLength = 63;
 
         private readonly LogIngestionServiceClient _logIngestionService;
         private readonly YandexCloudSinkSettings _settings;
@@ -50,6 +55,9 @@ namespace Serilog.Sinks.YandexCloud
         {
             _logIngestionService = logIngestionService ?? throw new ArgumentNullException(nameof(logIngestionService));
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+
+            if (_settings.ResourceId != null && _settings.ResourceId.Length > ResourceIdMaxLength)
+                throw new ArgumentException($"Resource ID is limited at {ResourceIdMaxLength} characters.");
 
             // This values doesn't change until the configuration changes
             _destination = new Destination()
