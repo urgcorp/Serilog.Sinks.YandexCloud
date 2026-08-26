@@ -43,6 +43,41 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 }
 ```
 
+### Setup from configuration example
+```csharp
+public static PeriodicBatchingSink? CreateYandexCloudSink(this IConfiguration configuration,
+    string? iamKeyFilePath = null, bool optional = true)
+{
+    var keyPath = iamKeyFilePath ?? configuration.GetValue<string>("YandexCloudLogger:IamJwtCredentialsFilePath");
+
+    var sinkSettings = new YandexCloudSinkSettings()
+    {
+        FolderId = configuration.GetValue<string>("YandexCloudLogger:FolderId"),
+        LogGroupId = configuration.GetValue<string>("YandexCloudLogger:LogGroupId"),
+        ResourceType = configuration.GetValue<string>("YandexCloudLogger:ResourceType"),
+        ResourceId = configuration.GetValue<string>("YandexCloudLogger:ResourceId")
+    };
+
+    try
+    {
+        sinkSettings.Validate();
+
+        var sink = sinkSettings.CreateYandexCloudSink(keyPath ?? "");
+        return sink;
+    }
+    catch (InvalidDataException) // Key exists, but failed to deserialize
+    {
+        throw;
+    }
+    catch
+    {
+        if (optional)
+            return null;
+        throw;
+    }
+}
+```
+
 ### Pass ILogger Category Name as Yandex Cloud Logger StreamName
 Use `YcStreamNameCsEnricher` when registering sink  
 It will truncate namespace and leave only class name for which logger was requested  
